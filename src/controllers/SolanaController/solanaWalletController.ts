@@ -110,26 +110,60 @@ export const getPortfoliobyAddress = async (req: Request, res: Response, next: N
 
 export const getAllTokenBalances = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = (req as any).user.id;
         const { network, walletAddress } = req.body;
-        const tokenBalances = await GetAllTokenBalances(walletAddress, network);
+
+        let resolvedWalletAddress: string;
+
+        if (walletAddress === "default") {
+            const walletDetails = await getWalletAddressesByUserId(userId);
+            resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+            if (!resolvedWalletAddress) {
+                return res.status(404).json({ message: 'No default wallet found for the user.' });
+            }
+        } else {
+            resolvedWalletAddress = walletAddress;
+        }
+
+        const tokenBalances = await GetAllTokenBalances(resolvedWalletAddress, network);
         res.status(200).json(tokenBalances);
     }
     catch (error) {
-        next(error);
+        console.error("Error getting all token balances:", error);
+        next(error); // Forward error to error-handling middleware
     }
 }
+
 
 
 export const getAllCollections = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = (req as any).user.id;
         const { network, walletAddress } = req.body;
-        const collections = await GetAllNFTsShyft(walletAddress, network);
+
+        let resolvedWalletAddress: string;
+
+        if (walletAddress === "default") {
+            const walletDetails = await getWalletAddressesByUserId(userId);
+            resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+            if (!resolvedWalletAddress) {
+                return res.status(404).json({ message: 'No default wallet found for the user.' });
+            }
+        } else {
+            resolvedWalletAddress = walletAddress;
+        }
+
+        const collections = await GetAllNFTsShyft(resolvedWalletAddress, network);
         res.status(200).json(collections);
     }
     catch (error) {
-        next(error);
+        console.error("Error getting all collections:", error);
+        next(error); // Forward error to error-handling middleware
     }
 }
+
 
 export const getAllDomains = async (req: Request, res: Response, next: NextFunction) => {
     try {
