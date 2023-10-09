@@ -13,6 +13,7 @@ import { solanaTransactionRouter } from './routes/SolanaRoutes/solanaTransaction
 import { solanaTokenRouter } from './routes/SolanaRoutes/solanaTokenRoutes';
 
 import { gameApiRouter } from './routes/GameRoutes/gameRoutes';
+import dataRoutes from './routes/DataRoutes/dataRoutes';
 // Load environment variables from .env file
 dotenv.config();
 
@@ -49,7 +50,7 @@ app.use('/api/v1/soltransaction', solanaTransactionRouter);
 app.use('/api/v1/soltoken', solanaTokenRouter);
 
 app.use('/api/v1/game', gameApiRouter);
-
+app.use('/api/v1/data', dataRoutes);
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const statusCode = err.statusCode || 500;

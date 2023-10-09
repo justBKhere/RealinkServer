@@ -167,22 +167,55 @@ export const getAllCollections = async (req: Request, res: Response, next: NextF
 
 export const getAllDomains = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = (req as any).user.id;
         const { network, walletAddress } = req.body;
-        const domains = await GetAllDomainsShyft(walletAddress, network);
+
+        let resolvedWalletAddress: string;
+
+        if (walletAddress === "default") {
+            const walletDetails = await getWalletAddressesByUserId(userId);
+            resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+            if (!resolvedWalletAddress) {
+                return res.status(404).json({ message: 'No default wallet found for the user.' });
+            }
+        } else {
+            resolvedWalletAddress = walletAddress;
+        }
+
+        const domains = await GetAllDomainsShyft(resolvedWalletAddress, network);
         res.status(200).json(domains);
     }
     catch (error) {
-        next(error);
+        console.error("Error getting all domains:", error);
+        next(error); // Forward error to error-handling middleware
     }
 }
 
+
 export const getAllTransactions = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const userId = (req as any).user.id;
         const { network, walletAddress } = req.body;
-        const transactions = await GetAllTransactionsShyft(walletAddress, network);
+
+        let resolvedWalletAddress: string;
+
+        if (walletAddress === "default") {
+            const walletDetails = await getWalletAddressesByUserId(userId);
+            resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+            if (!resolvedWalletAddress) {
+                return res.status(404).json({ message: 'No default wallet found for the user.' });
+            }
+        } else {
+            resolvedWalletAddress = walletAddress;
+        }
+
+        const transactions = await GetAllTransactionsShyft(resolvedWalletAddress, network);
         res.status(200).json(transactions);
     }
     catch (error) {
-        next(error);
+        console.error("Error getting all transactions:", error);
+        next(error); // Forward error to error-handling middleware
     }
 }

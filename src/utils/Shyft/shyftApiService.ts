@@ -147,3 +147,23 @@ export async function MintCNftShyft(serverKeyPair: Keypair, metaData: string, me
         console.log("ShyftError:", error);
     }
 }
+
+export async function createMerkleTree(serverWalletAddress: string, Network: string) {
+    try {
+        const response = await SetShyftSDK(Network).nft.compressed.createMerkleTree({ walletAddress: serverWalletAddress, maxDepthSizePair: { "maxDepth": 14, "maxBufferSize": 64 }, canopyDepth: 5 })
+        return response;
+    }
+    catch (error) {
+        console.log('shyftError', error);
+    }
+}
+
+export async function mintCompressedNFT(serverWalletAddress: string, merkleTree: string, receiverAddress: string, metadataUri: string, Network: string) {
+    try {
+        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: serverWalletAddress, merkleTree: merkleTree, receiver: receiverAddress, metadataUri: metadataUri });
+        return response;
+    }
+    catch (error) {
+        console.log('shyftError', error);
+    }
+}

@@ -1,0 +1,31 @@
+service: my-lambda-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+            - "s3: GetObject"
+          Resource: "arn:aws:s3:::realink-s3-bucket/*"
+
+functions:
+  upload:
+    handler: handler.upload
+    events:
+      - http:
+          path: upload
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    NewResource:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: realink-s3-bucket
