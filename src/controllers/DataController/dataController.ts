@@ -140,25 +140,38 @@ const uploadImageToIPFSInternal = async (file: Express.Multer.File): Promise<str
 export const createMetadataFromForm = async (req: Request, res: Response) => {
     try {
         // Step 1: Accept form data
-        const { name, description, symbol, attributes, royalty, creator, share, external_url } = req.body;
+        const { name, description, symbol, attributes, royalty, creator, share, external_url, properties, seller_fee_basis_points } = req.body;
 
         if (!req.file) {
             console.warn("No file found in the request.");
             return res.status(400).send('No file uploaded.');
+        }
+        let parsedProperties;
+        let parsedAttributes;
+
+        try {
+            parsedProperties = properties ? JSON.parse(properties) : {};
+            parsedAttributes = attributes ? JSON.parse(attributes) : [];
+
+            console.log(`Parsed properties: ${JSON.stringify(parsedProperties)}`);
+        } catch (error) {
+            return res.status(400).send('Invalid JSON provided.');
         }
 
         console.log(`Preparing to upload file: ${req.file.originalname} to IPFS using NFT.Storage...`);
 
         // Step 2: Upload the image to IPFS
         const ipfsLink = await uploadImageToIPFSInternal(req.file);
-
+        parsedProperties.files[0].uri = ipfsLink;
         // Step 3: Construct the metadata object
         const metadata = {
             name: name || 'Untitled',
             symbol: symbol || 'UNK',
             description: description || 'No description',
+            seller_fee_basis_points: parseInt(seller_fee_basis_points),
             image: ipfsLink,
             attributes: attributes ? JSON.parse(attributes) : [],
+            properties: parsedProperties,
             royalty: royalty || 0,
             creator: creator || 'Unknown',
             share: share || 100,

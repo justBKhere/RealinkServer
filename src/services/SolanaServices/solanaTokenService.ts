@@ -1,5 +1,5 @@
 import { Keypair, Transaction, sendAndConfirmTransaction, Connection } from "@solana/web3.js";
-import { AirdropTokenShyft, BurnTokenShyft, CreateFungibleTokenShyft, MintFungibleTokenShyft, createMerkleTree } from "../../utils/Shyft/shyftApiService";
+import { AirdropTokenShyft, BurnTokenShyft, CreateFungibleTokenShyft, MintFungibleTokenShyft, createMerkleTree, MintCNftShyft } from "../../utils/Shyft/shyftApiService";
 import { getPrivateKeyFromSession } from "./solanaTransactionService";
 import { setSolanaCluster } from "./solanaWalletService";
 import { body } from "express-validator";
@@ -8,6 +8,7 @@ import { base58ToUint8Array, uint8ArrayToBase58 } from "../../utils/base58Utils"
 import { getWalletAddressesByUserId } from "./solanaWalletService";
 
 import dotenv from 'dotenv';
+import { User } from "../../models/User";
 dotenv.config();
 
 
@@ -109,6 +110,48 @@ export const createMerkleeTreeService = async (body: any, jwtToken: string, user
     console.log("OWNER PUBLIC KEY", ownerKeypair.publicKey.toString());
     console.log("OWNER PRIVATE KEY", ownerPrivateKey);
     const response: any = await createMerkleTree(serverKeyPair.publicKey.toString(), network);
+    console.log("response from createMerkleTree", response);  // Log the response from createMerkleTree
+
+
+
+    const signedTx = await partialSignTransactionWithPrivateKeys(response.encoded_transaction, [uint8ArrayToBase58(serverKeyPair.secretKey)]);
+    console.log('Transaction partially signed with owner private key', signedTx);  // Log when the transaction is partially signed
+
+
+    const confirmedTx = await connection.sendRawTransaction(signedTx.serialize());
+    return confirmedTx;
+}
+
+export const mintCompressedNFTService = async (body: any) => {
+    console.log('createMerkleeTreeService started');  // Log when the function starts
+
+    const { walletAddress, metaData, merkleTree, username, network } = body;
+    const user = await User.findOne({ username });
+    const userId = user?._id.toString();
+    const connection = new Connection(setSolanaCluster(network));
+    let resolvedWalletAddress: string;
+
+    if (!process.env.GAME_SERVER_PRIVATE_KEY) {
+        console.log('GAME_SERVER_PRIVATE_KEY not found in environment variables');  // Log when the env variable is missing
+        return;
+    }
+
+    const serverKeyPair = Keypair.fromSecretKey(base58ToUint8Array(process.env.GAME_SERVER_PRIVATE_KEY));
+
+    if (walletAddress === "default") {
+        const walletDetails = await getWalletAddressesByUserId(userId);
+        resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+        if (!resolvedWalletAddress) {
+            console.log({ message: 'No default wallet found for the user.' });
+        }
+    } else {
+        resolvedWalletAddress = walletAddress;
+    }
+
+    console.log("public key of wallet address", resolvedWalletAddress);  // Log the resolved wallet address
+
+    const response: any = await MintCNftShyft(serverKeyPair, metaData, merkleTree, resolvedWalletAddress, network);
     console.log("response from createMerkleTree", response);  // Log the response from createMerkleTree
 
 

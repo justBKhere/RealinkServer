@@ -1,6 +1,6 @@
 
 import { Request, Response } from 'express';
-import { airdropTokenService, burnTokenService, createTokenService, mintTokenService, createMerkleeTreeService } from '../../services/SolanaServices/solanaTokenService';
+import { airdropTokenService, burnTokenService, createTokenService, mintTokenService, createMerkleeTreeService, mintCompressedNFTService } from '../../services/SolanaServices/solanaTokenService';
 import { Console } from 'console';
 
 export const createFungibleToken = async (req: Request, res: Response) => {
@@ -99,5 +99,23 @@ export const createMerkleeTree = async (req: Request, res: Response) => {
         }
         res.status(error.statusCode).json({ error: error.message });
     }
+}
 
+export const mintcNFTToUser = async (req: Request, res: Response) => {
+    try {
+        console.log("req.body", req);
+        const requestParam: any = req;
+        const userId = requestParam.user.id;
+
+        const transactionId = await mintCompressedNFTService(req.body);
+        res.status(200).json({ message: "Transaction sent successfully", transactionId });
+    }
+    catch (error: any) {
+
+        console.error(`Error creating tree: ${error.message}`);
+        if (!error.statusCode) {
+            error.statusCode = 500;
+        }
+        res.status(error.statusCode).json({ error: error.message });
+    }
 }

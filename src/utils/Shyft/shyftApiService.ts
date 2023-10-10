@@ -160,7 +160,7 @@ export async function createMerkleTree(serverWalletAddress: string, Network: str
 
 export async function mintCompressedNFT(serverWalletAddress: string, merkleTree: string, receiverAddress: string, metadataUri: string, Network: string) {
     try {
-        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: serverWalletAddress, merkleTree: merkleTree, receiver: receiverAddress, metadataUri: metadataUri });
+        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: serverWalletAddress, merkleTree: merkleTree, metadataUri: metadataUri, receiver: receiverAddress });
         return response;
     }
     catch (error) {
