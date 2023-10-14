@@ -296,9 +296,9 @@ export const createMetadata = async (
         attributes: parsedAttributes,
         properties: parsedProperties,
         royalty: royalty || 0,
-        creator: creator || 'Unknown',
+        creator: 'realink',
         share: share || 100,
-        external_url: external_url || 'https://www.example.com'
+        external_url: external_url || 'https://www.getrealink.com'
     };
     console.log("[createMetadata] - Constructed metadata:", JSON.stringify(metadata, null, 2));
 

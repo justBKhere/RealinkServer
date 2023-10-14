@@ -109,7 +109,6 @@ export const createMerkleeTreeService = async (body: any, jwtToken: string, user
     console.log('Retrieved owner private key from session');  // Log when the private key is retrieved
     const ownerKeypair = Keypair.fromSecretKey(ownerPrivateKey);
     console.log("OWNER PUBLIC KEY", ownerKeypair.publicKey.toString());
-    console.log("OWNER PRIVATE KEY", ownerPrivateKey);
     const response: any = await createMerkleTree(serverKeyPair.publicKey.toString(), ownerKeypair.publicKey.toString(), network);
     console.log("response from createMerkleTree", response);  // Log the response from createMerkleTree
 
@@ -133,7 +132,7 @@ export const mintCompressedNFTService = async (body: any, jwtToken: string,) => 
     const userId = user?._id.toString();
     console.log(`[mintCompressedNFTService] - Found user with ID: ${userId}`);
 
-    const connection = new Connection(setSolanaCluster(network));
+    const connection = new Connection(setSolanaCluster(network), 'processed');
 
     if (!process.env.GAME_SERVER_PRIVATE_KEY) {
         console.error('[mintCompressedNFTService] - GAME_SERVER_PRIVATE_KEY not found in environment variables');
@@ -162,7 +161,7 @@ export const mintCompressedNFTService = async (body: any, jwtToken: string,) => 
     console.log(`[mintCompressedNFTService] - OWNER PUBLIC KEY: ${ownerKeypair.publicKey.toString()}`);
 
     // Adding a 2-second delay before minting cNFT
-    await new Promise(resolve => setTimeout(resolve, 20000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const response: any = await MintCNftShyft(serverKeyPair, ownerKeypair, metaData, merkleTree, resolvedWalletAddress, network);
     console.log(`[mintCompressedNFTService] - Response from MintCNftShyft: ${JSON.stringify(response)}`);
