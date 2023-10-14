@@ -135,12 +135,12 @@ export async function AirdropTokenShyft(walletAddress: string, tokenAddress: str
     }
 }
 
-export async function MintCNftShyft(serverKeyPair: Keypair, metaData: string, merkleTree: string, walletAddress: string, Network: string) {
+export async function MintCNftShyft(serverKeyPair: Keypair, ownerKeyPair: Keypair, metaData: string, merkleTree: string, walletAddress: string, Network: string) {
     console.log("metaData", metaData);
     console.log("merkleTree", merkleTree);
     console.log("walletAddress", walletAddress);
     try {
-        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: serverKeyPair.publicKey.toString(), merkleTree: merkleTree, metadataUri: metaData, receiver: walletAddress, feePayer: serverKeyPair.publicKey.toString() });
+        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: ownerKeyPair.publicKey.toString(), merkleTree: merkleTree, metadataUri: metaData, receiver: walletAddress, feePayer: serverKeyPair.publicKey.toString() });
         return response;
     }
     catch (error) {
@@ -148,9 +148,23 @@ export async function MintCNftShyft(serverKeyPair: Keypair, metaData: string, me
     }
 }
 
-export async function createMerkleTree(serverWalletAddress: string, Network: string) {
+export async function MintCNftShyftAirdrop(serverKeyPair: Keypair, ownerKeyPair: Keypair, metaData: string, merkleTree: string, walletAddress: string, Network: string) {
+    console.log("metaData", metaData);
+    console.log("merkleTree", merkleTree);
+    console.log("walletAddress", walletAddress);
     try {
-        const response = await SetShyftSDK(Network).nft.compressed.createMerkleTree({ walletAddress: serverWalletAddress, maxDepthSizePair: { "maxDepth": 14, "maxBufferSize": 64 }, canopyDepth: 5 })
+        const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: ownerKeyPair.publicKey.toString(), merkleTree: merkleTree, metadataUri: metaData, receiver: walletAddress, feePayer: serverKeyPair.publicKey.toString() });
+        return response;
+    }
+    catch (error) {
+        console.log("ShyftError:", error);
+    }
+}
+
+export async function createMerkleTree(serverWalletAddress: string, ownerWalletAddress: string, Network: string) {
+    try {
+        const response = await SetShyftSDK(Network).nft.compressed.createMerkleTree({ walletAddress: ownerWalletAddress, maxDepthSizePair: { "maxDepth": 3, "maxBufferSize": 8 }, canopyDepth: 2, feePayer: serverWalletAddress });
+        console.log("response", response);
         return response;
     }
     catch (error) {
@@ -161,6 +175,16 @@ export async function createMerkleTree(serverWalletAddress: string, Network: str
 export async function mintCompressedNFT(serverWalletAddress: string, merkleTree: string, receiverAddress: string, metadataUri: string, Network: string) {
     try {
         const response = await SetShyftSDK(Network).nft.compressed.mint({ creatorWallet: serverWalletAddress, merkleTree: merkleTree, metadataUri: metadataUri, receiver: receiverAddress });
+        return response;
+    }
+    catch (error) {
+        console.log('shyftError', error);
+    }
+}
+
+export async function getAllcNFTsShyft(walletAddress: string, Network: string) {
+    try {
+        const response = await SetShyftSDK(Network).nft.compressed.readAll({ walletAddress: walletAddress });
         return response;
     }
     catch (error) {

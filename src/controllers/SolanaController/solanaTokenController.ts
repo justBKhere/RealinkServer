@@ -107,7 +107,7 @@ export const mintcNFTToUser = async (req: Request, res: Response) => {
         const requestParam: any = req;
         const userId = requestParam.user.id;
 
-        const transactionId = await mintCompressedNFTService(req.body);
+        const transactionId = await mintCompressedNFTService(req.body, req.headers.authorization!);
         res.status(200).json({ message: "Transaction sent successfully", transactionId });
     }
     catch (error: any) {
@@ -119,3 +119,4 @@ export const mintcNFTToUser = async (req: Request, res: Response) => {
         res.status(error.statusCode).json({ error: error.message });
     }
 }
+

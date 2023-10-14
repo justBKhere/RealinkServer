@@ -2,9 +2,10 @@
 
 import { Request, Response } from 'express';
 import { NFTStorage, File } from 'nft.storage';
-import { uploadJSONToS3Internal, fetchJSONFromS3Internal } from './s3Controller';
+import { uploadJSONToS3Internal, fetchJSONFromS3Internal, DuplicateJsonToCustomUser } from './s3Controller';
 import fs from 'fs';
 import path from 'path';
+import axios from 'axios';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -45,6 +46,59 @@ export const uploadDataToIPFS = async (req: Request, res: Response) => {
         return res.status(500).send('Error uploading to IPFS.');
     }
 };
+
+const uploadToIPFSInternal = async (file: Express.Multer.File) => {
+    console.log(`Preparing to upload file: ${file.originalname} to IPFS using NFT.Storage...`);
+
+    const metadata = await nftStorageClient.store({
+        name: file.originalname,
+        description: 'Realink asset',
+        image: new File([file.buffer], file.originalname, { type: file.mimetype })
+    });
+
+    console.log("Upload successful. Received metadata from NFT.Storage:", JSON.stringify(metadata, null, 2));
+
+    // Use the URL object to parse the string and extract the CID
+    const parsedURL = metadata.data.image;
+    const ipfsCID = parsedURL.toString().split('://')[1];
+    // Construct the cleaned-up URL
+    const imageURL = `https://nftstorage.link/ipfs/${ipfsCID}`;
+
+    console.log("Cleaned ImageURL:", imageURL);
+
+    return { cid: metadata.ipnft, url: imageURL };
+};
+
+
+
+export const CreateUserMetadata = async (req: Request, res: Response) => {
+    try {
+        const { username, masterMetadataLink } = req.body;
+
+        // Fetch the content of the JSON file from the provided link
+        const response = await axios.get(masterMetadataLink);
+        const jsonData = response.data;
+
+        // Extract the name from the JSON content
+        const nameFromJson = jsonData.name; // Assuming the name is a direct property of the JSON
+
+        // Add the username to the extracted name
+        const newName = `${nameFromJson}_${username}`;
+
+        // Create a copy of the metadata with the new name
+        // Assuming DuplicateJsonToCustomUser takes the old name and new name as arguments
+        const duplicateResponse = await DuplicateJsonToCustomUser(nameFromJson, newName);
+        if (!duplicateResponse) {
+            return res.status(500).send("Duplication failed");
+        }
+
+        // Return the link to the metadata stored in S3
+        res.send({ link: duplicateResponse });
+    } catch (error) {
+        const errorMessage = (error as Error).message;
+        res.status(500).send(`Failed to create metadata: ${errorMessage}`);
+    }
+}
 
 
 export const uploadJSONToIPFS = async (req: Request, res: Response) => {
@@ -190,4 +244,68 @@ export const createMetadataFromForm = async (req: Request, res: Response) => {
     }
 
 };
+export const createMetadata = async (
+    file: Express.Multer.File,
+    name: string,
+    description: string,
+    symbol: string,
+    attributes: string,
+    royalty: string,
+    creator: string,
+    share: string,
+    external_url: string,
+    properties: string,
+    seller_fee_basis_points: string
+) => {
+    console.log('[createMetadata] - Start');
 
+    let parsedProperties;
+    let parsedAttributes;
+
+    try {
+        parsedProperties = properties ? JSON.parse(properties) : {};
+        parsedAttributes = attributes ? JSON.parse(attributes) : [];
+    } catch (error) {
+        console.error('[createMetadata] - Error parsing JSON:', error);
+        throw new Error('Invalid JSON provided.');
+    }
+
+    console.log('[createMetadata] - Uploading image to IPFS');
+    const ipfsLink = await uploadImageToIPFSInternal(file);
+    console.log('[createMetadata] - Image uploaded to IPFS:', ipfsLink);
+
+    parsedProperties.files[0].uri = ipfsLink;
+    console.log("[createMetadata] - Input values:");
+    console.log("name:", name);
+    console.log("symbol:", symbol);
+    console.log("description:", description);
+    console.log("seller_fee_basis_points:", seller_fee_basis_points);
+    console.log("ipfsLink:", ipfsLink);
+    console.log("parsedAttributes:", JSON.stringify(parsedAttributes, null, 2));
+    console.log("parsedProperties:", JSON.stringify(parsedProperties, null, 2));
+    console.log("royalty:", royalty);
+    console.log("creator:", creator);
+    console.log("share:", share);
+    console.log("external_url:", external_url);
+    const metadata = {
+        name: name || 'Untitled',
+        symbol: symbol || 'UNK',
+        description: description || 'No description',
+        seller_fee_basis_points: parseInt(seller_fee_basis_points),
+        image: ipfsLink,
+        attributes: parsedAttributes,
+        properties: parsedProperties,
+        royalty: royalty || 0,
+        creator: creator || 'Unknown',
+        share: share || 100,
+        external_url: external_url || 'https://www.example.com'
+    };
+    console.log("[createMetadata] - Constructed metadata:", JSON.stringify(metadata, null, 2));
+
+    console.log('[createMetadata] - Uploading metadata to S3');
+    const s3Response = await uploadJSONToS3Internal(name, metadata);
+    console.log('[createMetadata] - Metadata uploaded to S3:', s3Response.Location);
+
+    console.log('[createMetadata] - End');
+    return { link: s3Response.Location };
+};

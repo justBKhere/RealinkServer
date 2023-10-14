@@ -21,6 +21,26 @@ export const uploadJSONToS3Internal = async (name: string, data: any): Promise<a
     });
 };
 
+import { S3 } from 'aws-sdk';
+
+
+export const DuplicateJsonToCustomUser = async (name: string, userSpecificName: string) => {
+    try {
+        const data = await s3.copyObject({
+            Bucket: 'realink-s3-bucket',
+            CopySource: `realink-s3-bucket/${name}.json`,
+            Key: `${userSpecificName}.json`
+        }).promise();  // Convert the request to a promise
+
+        console.log(data);
+        return `https://realink-s3-bucket.s3.amazonaws.com/${userSpecificName}.json`;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
+
 export const fetchJSONFromS3Internal = async (filename: string): Promise<any> => {
     const params = {
         Bucket: 'realink-s3-bucket',

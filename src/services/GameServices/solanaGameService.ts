@@ -53,20 +53,21 @@ export async function AirdropSol(publicKeyStr: string, amount: number, network?:
     }
 }
 
-export async function SendCNFTtoPlayer(merkleTree: string, metaData: string, publicAddress: string, amount: number, network?: string) {
+/*export async function SendCNFTtoPlayer(merkleTree: string, metaData: string, publicAddress: string, amount: number, network?: string) {
     try {
         const connection = setConnection(network);
         const fromPrivateKey: any = process.env.GAME_SERVER_PRIVATE_KEY;
         const fromKeyPair = Keypair.fromSecretKey(base58ToUint8Array(fromPrivateKey));
 
-        const result = MintCNftShyft(fromKeyPair, metaData, merkleTree, publicAddress, network!);
+        
+       // const result = MintCNftShyft(fromKeyPair, metaData, merkleTree, publicAddress, network!);
         return result;
 
     } catch (error) {
         console.error('Error airdropping cNFT', error);
         return null;
     }
-}
+}*/
 
 export async function GetAssetFromPlayer(tokenAddress: string, fromKeyPair: Keypair, amount: number, network?: string) {
     try {

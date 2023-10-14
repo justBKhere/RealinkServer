@@ -13,6 +13,7 @@ import { solanaTransactionRouter } from './routes/SolanaRoutes/solanaTransaction
 import { solanaTokenRouter } from './routes/SolanaRoutes/solanaTokenRoutes';
 
 import { gameApiRouter } from './routes/GameRoutes/gameRoutes';
+import { realinkEndpointRouter } from './routes/SolanaRoutes/realinkEndpointRoutes';
 import dataRoutes from './routes/DataRoutes/dataRoutes';
 // Load environment variables from .env file
 dotenv.config();
@@ -48,6 +49,7 @@ app.use('/api/v1/user', authRouter);
 app.use('/api/v1/solwallet', solWalletRouter);
 app.use('/api/v1/soltransaction', solanaTransactionRouter);
 app.use('/api/v1/soltoken', solanaTokenRouter);
+app.use('/api/v1/realink', realinkEndpointRouter);
 
 app.use('/api/v1/game', gameApiRouter);
 app.use('/api/v1/data', dataRoutes);

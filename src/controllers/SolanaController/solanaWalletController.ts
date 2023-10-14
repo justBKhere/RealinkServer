@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { generate_Sol_Wallet, loadWalletFromMnemonic, AddNewWalletFromMnemonic, setSolanaCluster, getDefaultWalletPortfolio, getWalletPortfolioByAddress, getWalletAddressesByUserId } from '../../services/SolanaServices/solanaWalletService';
 import { UserService } from '../../services/userService';
-import { GetAllDomainsShyft, GetAllNFTsShyft, GetAllTokenBalances, GetAllTransactionsShyft } from '../../utils/Shyft/shyftApiService';
+import { GetAllDomainsShyft, GetAllNFTsShyft, GetAllTokenBalances, GetAllTransactionsShyft, getAllcNFTsShyft } from '../../utils/Shyft/shyftApiService';
 
 
 export const UpdateSolanaCluster = async (req: Request, res: Response, next: NextFunction) => {
@@ -217,5 +217,41 @@ export const getAllTransactions = async (req: Request, res: Response, next: Next
     catch (error) {
         console.error("Error getting all transactions:", error);
         next(error); // Forward error to error-handling middleware
+    }
+}
+
+export const getAllcNFTS = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        console.log("getAllcNFTS - Start");
+
+        const userId = (req as any).user.id;
+        console.log("User ID:", userId);
+
+        const { network, walletAddress } = req.body;
+        console.log("Network:", network, "Wallet Address:", walletAddress);
+
+        let resolvedWalletAddress: string;
+        if (walletAddress === "default") {
+            console.log("Resolving default wallet address for user");
+            const walletDetails = await getWalletAddressesByUserId(userId);
+            resolvedWalletAddress = walletDetails[0]?.publicKey;
+
+            if (!resolvedWalletAddress) {
+                console.warn("No default wallet found for the user.");
+                return res.status(404).json({ message: 'No default wallet found for the user.' });
+            }
+        } else {
+            resolvedWalletAddress = walletAddress;
+        }
+        console.log("Using Wallet Address:", resolvedWalletAddress);
+
+        const listOfcNFTs = await getAllcNFTsShyft(resolvedWalletAddress, network);
+        console.log("List of cNFTs:", listOfcNFTs);
+
+        res.status(200).json({ message: "Successfully fetched data", result: listOfcNFTs });
+    }
+    catch (error) {
+        console.error("Error getting all the transactions:", error);
+        next(error);
     }
 }
